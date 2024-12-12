@@ -1,0 +1,25 @@
+#!/bin/bash
+
+IPV4_FILE="cloudflare_ipv4_list.txt"
+IPV6_FILE="cloudflare_ipv6_list.txt"
+
+API_RESPONSE=$(curl --silent --request GET \
+    --url https://api.cloudflare.com/client/v4/ips \
+    --header 'Content-Type: application/json')
+
+if [[ -z "$API_RESPONSE" ]]; then
+    echo "Error: Failed to fetch data from Cloudflare API."
+    exit 1
+fi
+
+echo "$API_RESPONSE" | jq -r '.result.ipv4_cidrs[]' | sort > "$IPV4_FILE"
+echo "$API_RESPONSE" | jq -r '.result.ipv6_cidrs[]' | sort > "$IPV6_FILE"
+
+if [[ -s "$IPV4_FILE" && -s "$IPV6_FILE" ]]; then
+    echo "IP lists generated successfully:"
+    echo "- IPv4 CIDR list: $IPV4_FILE"
+    echo "- IPv6 CIDR list: $IPV6_FILE"
+else
+    echo "Error: Failed to generate IP lists."
+    exit 1
+fi

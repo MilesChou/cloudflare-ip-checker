@@ -1,0 +1,29 @@
+#!/bin/bash
+
+IPV4_FILE="cloudflare_ipv4_list.txt"
+IPV6_FILE="cloudflare_ipv6_list.txt"
+
+API_RESPONSE=$(curl --silent --request GET \
+    --url https://api.cloudflare.com/client/v4/ips \
+    --header 'Content-Type: application/json')
+
+TEMP_IPV4=$(mktemp)
+TEMP_IPV6=$(mktemp)
+echo "$API_RESPONSE" | jq -r '.result.ipv4_cidrs[]' | sort > "$TEMP_IPV4"
+echo "$API_RESPONSE" | jq -r '.result.ipv6_cidrs[]' | sort > "$TEMP_IPV6"
+
+if ! diff -q "$TEMP_IPV4" "$IPV4_FILE" > /dev/null; then
+    echo "Error: IPv4 list does not match the API response."
+    rm -f "$TEMP_IPV4" "$TEMP_IPV6"
+    exit 1
+fi
+
+if ! diff -q "$TEMP_IPV6" "$IPV6_FILE" > /dev/null; then
+    echo "Error: IPv6 list does not match the API response."
+    rm -f "$TEMP_IPV4" "$TEMP_IPV6"
+    exit 1
+fi
+
+rm -f "$TEMP_IPV4" "$TEMP_IPV6"
+
+echo "Verification successful: Files match the API response."
