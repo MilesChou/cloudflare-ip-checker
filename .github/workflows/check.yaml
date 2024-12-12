@@ -1,0 +1,39 @@
+name: Verify Cloudflare IPs
+
+on:
+  schedule:
+    # 每天 UTC 2 點執行排程，對應 +8 時區的 10:00
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  verify-cloudflare-ips:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Run verification script
+        id: verify
+        run: |
+          bash ./verify
+
+      - name: Notify Teams on failure
+        if: failure()
+        run: |
+          curl -H 'Content-Type: application/json' \
+               -d '{"text": "Cloudflare IP Verification Failed. Please check the logs for details."}' \
+               "$TEAMS_WEBHOOK_URL"
+
+      - name: Notify Teams on success
+        if: success()
+        run: |
+          curl -H 'Content-Type: application/json' \
+               -d '{"text": "Cloudflare IP Verification completed successfully."}' \
+               "$TEAMS_WEBHOOK_URL"
