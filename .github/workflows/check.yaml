@@ -29,11 +29,11 @@ jobs:
         run: |
           curl -H 'Content-Type: application/json' \
                -d '{"text": "Cloudflare IP Verification Failed. Please check the logs for details."}' \
-               "$TEAMS_WEBHOOK_URL"
+               "${{ secrets.TEAMS_WEBHOOK_URL }}"
 
       - name: Notify Teams on success
         if: success()
         run: |
           curl -H 'Content-Type: application/json' \
                -d '{"text": "Cloudflare IP Verification completed successfully."}' \
-               "$TEAMS_WEBHOOK_URL"
+               "${{ secrets.TEAMS_WEBHOOK_URL }}"
